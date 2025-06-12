@@ -91,7 +91,6 @@ func (t *TargetPlugin) scaleOut(ctx context.Context, resourceGroup string, vmSca
 		return fmt.Errorf("cannot get the vmss update future response: %v", err)
 	}
 
-	log.Debug("vmss update response", "response", resp.Body)
 
 	log.Info("successfully performed and verified scaling out")
 	return nil
@@ -103,7 +102,7 @@ func (t *TargetPlugin) scaleIn(ctx context.Context, resourceGroup string, vmScal
 	// would like on all log lines.
 	log := t.logger.With("action", "scale_in", "resource_group", resourceGroup, "vmss_name", vmScaleSet)
 
-	log.Debug("listing Azure ScaleSet instances", "vmss_name", vmScaleSet)
+	log.Debug("listing Azure ScaleSet instances")
 
 	if vmssMode == "Uniform" {
 
@@ -115,7 +114,6 @@ func (t *TargetPlugin) scaleIn(ctx context.Context, resourceGroup string, vmScal
 			// Filter: ptr.Of("startswith(instanceView/statuses/code, 'PowerState') eq true"),
 		})
 
-		log.Debug("iterating over Azure ScaleSet instances", "vmss_name", vmScaleSet)
 
 		remoteIDs := []string{}
 		for pager.More() {
@@ -309,8 +307,7 @@ func (t *TargetPlugin) scaleIn(ctx context.Context, resourceGroup string, vmScal
 		instanceIDPtrs := make([]*string, 0, len(instanceIDs))
 
 		for _, id := range instanceIDs {
-			idCopy := id // ensure a new variable for correct reference
-			instanceIDPtrs = append(instanceIDPtrs, &idCopy)
+			instanceIDPtrs = append(instanceIDPtrs, &id)
 		}
 
 		// Terminate the detached instances.
@@ -321,7 +318,7 @@ func (t *TargetPlugin) scaleIn(ctx context.Context, resourceGroup string, vmScal
 		}, nil)
 
 		if err != nil {
-			return fmt.Errorf("failed to scale in Azure ScaleSet: %v", err)
+			return fmt.Errorf("failed to scale in Azure ScaleSet: %w", err)
 		}
 
 		var resp armcompute.VirtualMachineScaleSetsClientDeleteInstancesResponse
